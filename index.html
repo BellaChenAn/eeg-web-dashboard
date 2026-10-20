@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live EEG Monitor</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1d2330; --muted: #6b7385; --line: #e3e6ec;
+    --att: #e0612f; --med: #2f8fd8; --noise: #8a8f9c; --raw: #3a9d6e;
+    --good: #2e9e5b; --warn: #d79b1f; --bad: #d6453d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --card: #1b1f27; --text: #e7eaf0; --muted: #8d95a7; --line: #2b313c;
+      --att: #ff8a5c; --med: #5fb0f0; --noise: #9aa0ad; --raw: #5cc792;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px 40px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
+  h1 { font-size: 20px; margin: 0 auto 0 0; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line); font-size: 13px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  button { font: inherit; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+  .card h2 { font-size: 14px; font-weight: 600; margin: 0 0 10px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .legend { font-weight: 400; color: var(--muted); font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 14px; height: 3px; display: inline-block; border-radius: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+  .stat .label { color: var(--muted); font-size: 12px; }
+  .stat .val { font-size: 32px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .sub { color: var(--muted); font-size: 12px; }
+  canvas { width: 100%; display: block; }
+  #trend { height: 260px; }
+  #raw { height: 180px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid2 .card { margin-bottom: 0; }
+  .bands { display: grid; gap: 6px; }
+  .band { display: grid; grid-template-columns: 78px 1fr 90px; align-items: center; gap: 8px; font-size: 12px; }
+  .band .bar { height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
+  .band .bar span { display: block; height: 100%; background: var(--med); width: 0; transition: width .3s; }
+  .band .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  td { padding: 3px 6px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  td:first-child { color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+  td:last-child { text-align: right; }
+  #log { height: 220px; overflow: auto; margin: 0; font: 12px/1.45 ui-monospace, Menlo, monospace;
+    color: var(--muted); white-space: pre-wrap; word-break: break-all; }
+  .hint { color: var(--muted); font-size: 12px; }
+  @media (max-width: 760px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .grid2 { grid-template-columns: 1fr; }
+    .grid2 .card { margin-bottom: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Live EEG Monitor</h1>
+    <span class="pill"><span class="dot" id="bridgeDot"></span><span id="bridgeText">Connecting to bridge…</span></span>
+    <span class="pill"><span class="dot" id="sigDot"></span><span id="sigText">Signal: —</span></span>
+    <button id="pauseBtn">Pause</button>
+    <button id="clearBtn">Clear</button>
+    <button id="csvBtn">Export CSV</button>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="label">Attention</div><div class="val" id="vAtt" style="color:var(--att)">—</div><div class="sub">0–100</div></div>
+    <div class="stat"><div class="label">Meditation</div><div class="val" id="vMed" style="color:var(--med)">—</div><div class="sub">0–100</div></div>
+    <div class="stat"><div class="label">Noise (poorSignalLevel)</div><div class="val" id="vPoor">—</div><div class="sub">0 = best signal, 200 = not worn</div></div>
+    <div class="stat"><div class="label">Blink strength</div><div class="val" id="vBlink">—</div><div class="sub" id="vBlinkT">—</div></div>
+  </div>
+
+  <div class="card">
+    <h2><span>Trend (last 120 s)</span>
+      <span class="legend"><i style="background:var(--att)"></i>Attention</span>
+      <span class="legend"><i style="background:var(--med)"></i>Meditation</span>
+      <span class="legend"><i style="background:var(--noise)"></i>Noise (right axis, 0–200)</span>
+    </h2>
+    <canvas id="trend"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Raw EEG (512 Hz, last 4 s)<span class="legend" id="rawRate"></span></h2>
+    <canvas id="raw"></canvas>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Band power (eegPower) <span class="legend">log scale</span></h2>
+      <div class="bands" id="bands"></div>
+    </div>
+    <div class="card">
+      <h2>Latest value of every field</h2>
+      <table id="fields"><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Raw packet log <span class="legend">(excluding rawEeg, newest first)</span></h2>
+    <pre id="log"></pre>
+  </div>
+  <p class="hint">Data from ThinkGear Connector (127.0.0.1:13854), relayed by bridge.py.</p>
+</div>
+
+<script>
+const TREND_WINDOW = 120;          // seconds
+const RAW_LEN = 512 * 4;           // 4 s of raw samples
+const BANDS = ["delta","theta","lowAlpha","highAlpha","lowBeta","highBeta","lowGamma","highGamma"];
+
+const state = {
+  paused: false,
+  trend: [],                       // {t, att, med, poor}
+  records: [],                     // rows for CSV export
+  latest: {},                      // flattened fields
+  att: null, med: null, poor: null, blink: null,
+  raw: new Float32Array(RAW_LEN), rawIdx: 0, rawCount: 0, rawRecv: 0,
+  logLines: [],
+};
+
+const $ = id => document.getElementById(id);
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+// ---------- Band bars ----------
+$("bands").innerHTML = BANDS.map(b =>
+  `<div class="band"><span>${b}</span><div class="bar"><span id="bar_${b}"></span></div><span class="num" id="num_${b}">—</span></div>`
+).join("");
+
+// ---------- Data stream ----------
+const es = new EventSource("/events");
+es.onerror = () => setBridge("bad", "Bridge not connected (is bridge.py running?)");
+es.onmessage = ev => {
+  const msg = JSON.parse(ev.data);
+  if (msg.type === "bridge") {
+    const src = msg.source || "headset";
+    if (msg.status === "connected") setBridge("good", `Receiving data: ${src}`);
+    else if (msg.status === "connecting") setBridge("warn", `Connecting: ${src}…`);
+    else if (msg.status === "waiting") setBridge("warn", `Connected, waiting for headset data (${src})`);
+    else setBridge("bad", `Not connected: ${src}`);
+    return;
+  }
+  if (state.paused) return;
+  if (msg.type === "raw") onRaw(msg.samples);
+  else if (msg.type === "packet") onPacket(msg.data, msg.t);
+};
+
+function setBridge(level, text) {
+  $("bridgeDot").style.background = css("--" + level);
+  $("bridgeText").textContent = text;
+}
+
+function onRaw(samples) {
+  for (const v of samples) {
+    state.raw[state.rawIdx] = v;
+    state.rawIdx = (state.rawIdx + 1) % RAW_LEN;
+  }
+  state.rawCount = Math.min(RAW_LEN, state.rawCount + samples.length);
+  state.rawRecv += samples.length;
+  state.latest["rawEeg"] = samples[samples.length - 1];
+}
+
+function flatten(obj, prefix = "", out = {}) {
+  for (const [k, v] of Object.entries(obj)) {
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (v && typeof v === "object") flatten(v, key, out); else out[key] = v;
+  }
+  return out;
+}
+
+function onPacket(d, t) {
+  Object.assign(state.latest, flatten(d));
+  const time = new Date(t * 1000);
+
+  if (d.eSense) { state.att = d.eSense.attention ?? state.att; state.med = d.eSense.meditation ?? state.med; }
+  if ("poorSignalLevel" in d) state.poor = d.poorSignalLevel;
+  if ("blinkStrength" in d) {
+    state.blink = d.blinkStrength;
+    $("vBlink").textContent = d.blinkStrength;
+    $("vBlinkT").textContent = "at " + time.toLocaleTimeString();
+  }
+  if (d.eegPower) updateBands(d.eegPower);
+
+  if (d.eSense || "poorSignalLevel" in d) {
+    state.trend.push({ t, att: state.att, med: state.med, poor: state.poor });
+    const cutoff = t - TREND_WINDOW;
+    while (state.trend.length && state.trend[0].t < cutoff) state.trend.shift();
+    state.records.push({
+      time: time.toISOString(), attention: state.att, meditation: state.med, poorSignalLevel: state.poor,
+      ...Object.fromEntries(BANDS.map(b => [b, d.eegPower ? d.eegPower[b] : ""])),
+    });
+    updateStats();
+  }
+
+  state.logLines.unshift(`${time.toLocaleTimeString()}  ${JSON.stringify(d)}`);
+  if (state.logLines.length > 200) state.logLines.length = 200;
+  $("log").textContent = state.logLines.join("\n");
+  renderFields();
+}
+
+function updateStats() {
+  $("vAtt").textContent = state.att ?? "—";
+  $("vMed").textContent = state.med ?? "—";
+  $("vPoor").textContent = state.poor ?? "—";
+  const p = state.poor;
+  let lvl = "bad", txt = "Signal: not worn / no contact";
+  if (p === 0) { lvl = "good"; txt = "Signal: good"; }
+  else if (p != null && p < 200) { lvl = "warn"; txt = `Signal: noisy (${p})`; }
+  $("sigDot").style.background = css("--" + lvl);
+  $("sigText").textContent = txt;
+  $("vPoor").style.color = css("--" + lvl);
+}
+
+function updateBands(p) {
+  const logs = BANDS.map(b => Math.log10(Math.max(1, p[b] || 1)));
+  const max = Math.max(7, ...logs);
+  BANDS.forEach((b, i) => {
+    $("bar_" + b).style.width = (logs[i] / max * 100).toFixed(1) + "%";
+    $("num_" + b).textContent = (p[b] ?? 0).toLocaleString();
+  });
+}
+
+function renderFields() {
+  $("fields").tBodies[0].innerHTML = Object.keys(state.latest).sort()
+    .map(k => `<tr><td>${k}</td><td>${state.latest[k]}</td></tr>`).join("");
+}
+
+// ---------- Drawing ----------
+function setupCanvas(c) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  if (c.width !== w * dpr || c.height !== h * dpr) { c.width = w * dpr; c.height = h * dpr; }
+  const ctx = c.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+function drawTrend() {
+  const { ctx, w, h } = setupCanvas($("trend"));
+  const L = 34, R = 40, T = 8, B = 22, pw = w - L - R, ph = h - T - B;
+  const now = Date.now() / 1000;
+  const x = t => L + (1 - (now - t) / TREND_WINDOW) * pw;
+  ctx.font = "11px -apple-system, sans-serif";
+  ctx.lineWidth = 1;
+
+  // grid and axes
+  ctx.strokeStyle = css("--line"); ctx.fillStyle = css("--muted");
+  for (let i = 0; i <= 4; i++) {
+    const y = T + ph * i / 4;
+    ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke();
+    ctx.textAlign = "right"; ctx.fillText(100 - i * 25, L - 6, y + 4);
+    ctx.textAlign = "left";  ctx.fillText(200 - i * 50, L + pw + 6, y + 4);
+  }
+  ctx.textAlign = "center";
+  for (let s = 0; s <= TREND_WINDOW; s += 30) ctx.fillText(s === 0 ? "now" : `-${s}s`, L + pw - s / TREND_WINDOW * pw, h - 6);
+
+  const line = (key, max, color, dash) => {
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash(dash || []);
+    ctx.beginPath();
+    let started = false;
+    for (const p of state.trend) {
+      if (p[key] == null) { started = false; continue; }
+      const px = x(p.t), py = T + ph * (1 - p[key] / max);
+      started ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+      started = true;
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  };
+  ctx.save(); ctx.beginPath(); ctx.rect(L, 0, pw, h); ctx.clip();
+  line("poor", 200, css("--noise"), [4, 3]);
+  line("med", 100, css("--med"));
+  line("att", 100, css("--att"));
+  ctx.restore();
+}
+
+function drawRaw() {
+  const { ctx, w, h } = setupCanvas($("raw"));
+  const n = state.rawCount;
+  if (!n) return;
+  let min = Infinity, max = -Infinity;
+  for (let i = 0; i < n; i++) {
+    const v = state.raw[(state.rawIdx - n + i + RAW_LEN) % RAW_LEN];
+    if (v < min) min = v; if (v > max) max = v;
+  }
+  const pad = Math.max(10, (max - min) * 0.1); min -= pad; max += pad;
+  const L = 44, pw = w - L, ph = h - 4;
+  ctx.font = "11px -apple-system, sans-serif"; ctx.fillStyle = css("--muted"); ctx.textAlign = "right";
+  ctx.fillText(Math.round(max), L - 6, 12); ctx.fillText(Math.round(min), L - 6, h - 4);
+  ctx.strokeStyle = css("--line"); ctx.lineWidth = 1;
+  const y0 = 2 + ph * (max / (max - min));
+  if (y0 > 0 && y0 < h) { ctx.beginPath(); ctx.moveTo(L, y0); ctx.lineTo(w, y0); ctx.stroke(); }
+  ctx.strokeStyle = css("--raw"); ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const v = state.raw[(state.rawIdx - n + i + RAW_LEN) % RAW_LEN];
+    const px = L + (RAW_LEN - n + i) / RAW_LEN * pw, py = 2 + ph * (1 - (v - min) / (max - min));
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+}
+
+function frame() {
+  if (!state.paused) { drawTrend(); drawRaw(); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+setInterval(() => {
+  $("rawRate").textContent = state.rawRecv ? `actual rate ≈ ${state.rawRecv} Hz` : "";
+  state.rawRecv = 0;
+}, 1000);
+
+// ---------- Buttons ----------
+$("pauseBtn").onclick = () => {
+  state.paused = !state.paused;
+  $("pauseBtn").textContent = state.paused ? "Resume" : "Pause";
+};
+$("clearBtn").onclick = () => {
+  Object.assign(state, { trend: [], records: [], latest: {}, logLines: [], rawCount: 0 });
+  $("log").textContent = ""; renderFields();
+};
+$("csvBtn").onclick = () => {
+  if (!state.records.length) return alert("No data yet");
+  const cols = Object.keys(state.records[0]);
+  const csv = [cols.join(","), ...state.records.map(r => cols.map(c => r[c] ?? "").join(","))].join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = `eeg_${new Date().toISOString().replace(/[:.]/g, "-")}.csv`;
+  a.click();
+};
+</script>
+</body>
+</html>
