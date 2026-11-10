@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Decorations</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  .wrap { display: flex; gap: var(--space-6); padding: var(--space-4); align-items: flex-start; }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  figure { margin: 0; text-align: center; }
+  figcaption { font-family: var(--font-pixel); font-size: 16px; line-height: 22px; margin-top: 4px; }
+  canvas { image-rendering: pixelated; display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="scene"></div>
+  <div class="row" id="items"></div>
+</div>
+<script>
+  var ITEMS = [['flag', 'Flag'], ['pot', 'Flowers'], ['bunting', 'Bunting'], ['lantern', 'Lantern'], ['crab', 'Crab friend'], ['gull', 'Gull'], ['star', 'Sea star']];
+  function draw() {
+    var items = document.getElementById('items'), scene = document.getElementById('scene');
+    items.innerHTML = scene.innerHTML = '';
+    ITEMS.forEach(function (it) {
+      var spr = LK.SPRITES[it[0]], sz = LK.spriteSize(spr), w = 20, h = 12;
+      var cv = LK.spriteCanvas(w, h, 5, function (ctx, p) { LK.drawSprite(ctx, spr, Math.floor((w - sz.w) / 2), Math.floor((h - sz.h) / 2), p); }, 'surface-raised');
+      var f = document.createElement('figure'), c = document.createElement('figcaption'); c.textContent = it[1];
+      f.appendChild(cv); f.appendChild(c); items.appendChild(f);
+    });
+    // decorated lighthouse
+    scene.appendChild(LK.spriteCanvas(60, 64, 4, function (ctx, p) {
+      for (var y = 0; y < 64; y++) { ctx.fillStyle = y < 44 ? LK.mix(p.sky, p.lamp, y / 120) : p.sea; ctx.fillRect(0, y, 60, 1); }
+      LK.island(ctx, p, 24, 52);
+      LK.lighthouse(ctx, p, 24, 52, 'classic', 0.3, false);
+      LK.drawSprite(ctx, LK.SPRITES.flag, 24, 2, p);
+      LK.drawSprite(ctx, LK.SPRITES.bunting, 16, 15, p);
+      LK.drawSprite(ctx, LK.SPRITES.pot, 9, 45, p);
+      LK.drawSprite(ctx, LK.SPRITES.crab, 31, 47, p);
+      LK.drawSprite(ctx, LK.SPRITES.gull, 44, 10, p);
+      LK.drawSprite(ctx, LK.SPRITES.lantern, 34, 45, p);
+    }));
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>

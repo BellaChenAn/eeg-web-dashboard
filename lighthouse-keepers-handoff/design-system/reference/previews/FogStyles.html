@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Fog styles</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); padding: var(--space-4); }
+  canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
+  h3 { font-family: var(--font-pixel); font-weight: 600; font-size: 20px; line-height: 26px; margin: var(--space-2) 0 0; }
+  p { margin: 2px 0 0; font-size: 14px; line-height: 20px; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="grid">
+  <figure style="margin:0"><canvas id="a"></canvas><h3>A · Dithered</h3><p>Checkerboard fog in two densities. Most "retro"; busiest to look at.</p></figure>
+  <figure style="margin:0"><canvas id="b"></canvas><h3>B · Banded</h3><p>Flat horizontal fog bands. Calmest and clearest — the lit water stands out most.</p></figure>
+  <figure style="margin:0"><canvas id="c"></canvas><h3>C · Puffy</h3><p>Soft cloud clumps with a light top edge. Friendliest, most storybook.</p></figure>
+</div>
+<script>
+  function draw() {
+    var o = { attention: 0.55, steady: false, route: false, phase: 'tide' };
+    LK.harbour(document.getElementById('a'), Object.assign({ fog: 'dither' }, o));
+    LK.harbour(document.getElementById('b'), Object.assign({ fog: 'bands' }, o));
+    LK.harbour(document.getElementById('c'), Object.assign({ fog: 'clouds' }, o));
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>

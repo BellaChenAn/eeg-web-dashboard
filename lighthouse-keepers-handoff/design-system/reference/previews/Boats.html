@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Boats</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-6); padding: var(--space-4); align-items: flex-end; }
+  .pair { display: flex; gap: var(--space-2); align-items: flex-end; }
+  canvas { image-rendering: pixelated; display: block; }
+  h3 { font-family: var(--font-pixel); font-weight: 600; font-size: 18px; line-height: 24px; margin: var(--space-2) 0 0; }
+  p { margin: 2px 0 0; font-size: 13px; line-height: 18px; color: var(--ink-muted); max-width: 240px; }
+  .note { padding: 0 var(--space-4) var(--space-4); font-size: 14px; color: var(--ink-muted); margin: 0; }
+</style>
+</head>
+<body>
+<div class="row" id="r"></div>
+<p class="note">Left of each pair: in the beam. Right: waiting in fog — the boat fades toward the fog colour and a single lantern pixel bobs above it, so the Pilot can still find it. Nothing ever sinks.</p>
+<script>
+  var BOATS = [
+    { k: 'row', name: 'Rowboat', note: '1–2 passengers. Small and quick.' },
+    { k: 'sail', name: 'Sailboat', note: '3 passengers.' },
+    { k: 'fish', name: 'Fishing boat', note: '4 passengers; lit cabin window.' },
+    { k: 'storm', name: 'Storm Ship', note: 'The climax: 12 passengers, needs a steady beam to find its channel.' }
+  ];
+  function tile(k, waiting) {
+    var spr = LK.SPRITES[k], sz = LK.spriteSize(spr), w = sz.w + 8, h = sz.h + 8;
+    return LK.spriteCanvas(w, h, k === 'storm' ? 4 : 6, function (ctx, p) {
+      for (var y = 0; y < h; y++) {
+        var lit = !waiting;
+        ctx.fillStyle = lit ? LK.mix(p.sea, p.beam, y % 2 ? 0.3 : 0.18) : (y % 3 ? p.fog : p['fog-thick']);
+        ctx.fillRect(0, y, w, 1);
+      }
+      LK.drawSprite(ctx, spr, 4, 5, p, waiting ? { dim: 0.6, dimTo: 'fog' } : {});
+      for (var f = 4; f < 4 + sz.w; f += 3) LK.px(ctx, p.crest, f, 5 + sz.h);
+      if (waiting) { LK.px(ctx, p.lamp, 4 + Math.floor(sz.w / 2), 2); LK.px(ctx, LK.mix(p.lamp, p.fog, 0.5), 4 + Math.floor(sz.w / 2), 3); }
+    });
+  }
+  function draw() {
+    var r = document.getElementById('r'); r.innerHTML = '';
+    BOATS.forEach(function (b) {
+      var d = document.createElement('div'), pr = document.createElement('div'); pr.className = 'pair';
+      pr.appendChild(tile(b.k, false)); pr.appendChild(tile(b.k, true));
+      var h = document.createElement('h3'); h.textContent = b.name;
+      var p = document.createElement('p'); p.textContent = b.note;
+      d.appendChild(pr); d.appendChild(h); d.appendChild(p); r.appendChild(d);
+    });
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>

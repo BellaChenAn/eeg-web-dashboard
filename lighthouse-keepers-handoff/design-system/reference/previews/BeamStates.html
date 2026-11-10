@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Beam states</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); padding: var(--space-4); }
+  figure { margin: 0; }
+  canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
+  h3 { font-family: var(--font-pixel); font-weight: 600; font-size: 20px; line-height: 26px; margin: var(--space-2) 0 0; }
+  p { margin: 2px 0 0; font-size: 14px; line-height: 20px; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="grid">
+  <figure><canvas id="s1"></canvas><h3>Resting glow</h3><p>Below threshold for a while: shrinks to a lamp glow. Never dark — boats just wait.</p></figure>
+  <figure><canvas id="s2"></canvas><h3>Narrow beam</h3><p>Just above threshold. The cone eases open over about a second (smoothed signal).</p></figure>
+  <figure><canvas id="s3"></canvas><h3>Wide beam</h3><p>Well above threshold. Reaches the far boats.</p></figure>
+  <figure><canvas id="s4"></canvas><h3>Steady beam</h3><p>Held for the full hold time: brighter core, sparkles, hidden rocks appear.</p></figure>
+  <figure><canvas id="s5"></canvas><h3>Flare</h3><p>Three steady beams: the whole bay lights up for a few seconds. A slow bloom, never a flash.</p></figure>
+  <figure><canvas id="s6"></canvas><h3>Frosty lamp</h3><p>Poor headset signal: frost on the glass, not a failure colour. Tells the parent to adjust the headset.</p></figure>
+</div>
+<script>
+  function draw() {
+    var $ = function (id) { return document.getElementById(id); };
+    LK.harbour($('s1'), { attention: 0.0, route: false });
+    LK.harbour($('s2'), { attention: 0.28, route: false });
+    LK.harbour($('s3'), { attention: 0.8, route: false });
+    LK.harbour($('s4'), { attention: 0.8, steady: true, route: false });
+    LK.harbour($('s5'), { flare: true, steady: true, route: false });
+    LK.harbour($('s6'), { attention: 0.15, frost: true, route: false });
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Pixel scale</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); padding: var(--space-4); }
+  figure { margin: 0; }
+  canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
+  h3 { font-family: var(--font-pixel); font-weight: 600; font-size: 20px; line-height: 26px; margin: var(--space-2) 0 0; }
+  p { margin: 2px 0 0; font-size: 14px; line-height: 20px; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="grid">
+  <figure><canvas id="a"></canvas><h3>160 × 90 · chunky</h3><p>Big readable sprites, very little detail. 12× on a 1080p screen. Least to draw.</p></figure>
+  <figure><canvas id="b"></canvas><h3>240 × 135 · default</h3><p>Balanced. 8× on 1080p, 4× in a 960-wide window. Room for 5–6 boats.</p></figure>
+  <figure><canvas id="c"></canvas><h3>320 × 180 · detailed</h3><p>Most open sea and smallest boats — harder for young kids to track. 6× on 1080p.</p></figure>
+</div>
+<script>
+  function draw() {
+    var o = { attention: 0.6, steady: true, phase: 'tide' };
+    LK.harbour(document.getElementById('a'), Object.assign({ w: 160, h: 90 }, o));
+    LK.harbour(document.getElementById('b'), Object.assign({ w: 240, h: 135 }, o));
+    LK.harbour(document.getElementById('c'), Object.assign({ w: 320, h: 180 }, o));
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>

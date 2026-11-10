@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Night arc</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); padding: var(--space-4); }
+  figure { margin: 0; }
+  canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
+  h3 { font-family: var(--font-pixel); font-weight: 600; font-size: 20px; line-height: 26px; margin: var(--space-2) 0 0; }
+  h3 span { font-family: var(--font-read); font-weight: 400; font-size: 13px; color: var(--ink-muted); margin-left: var(--space-2); }
+  p { margin: 2px 0 0; font-size: 14px; line-height: 20px; color: var(--ink-muted); }
+  .arc { align-self: center; font-size: 15px; line-height: 22px; color: var(--ink-muted); }
+  .arc b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="grid">
+  <figure><canvas id="lighting"></canvas><h3>Lamp Lighting<span>~1 min</span></h3><p>Lamp starts frosty and clears as the headset signal improves. No boats yet.</p></figure>
+  <figure><canvas id="calm"></canvas><h3>Calm Waters<span>~1 min</span></h3><p>Thin fog, open sky, more stars. The child sees the beam respond with nothing at stake.</p></figure>
+  <figure><canvas id="tide"></canvas><h3>Three Tides<span>3 × ~3 min</span></h3><p>Full fog, boats at the edge, rocks under a steady beam. Same look every tide; only the boats change.</p></figure>
+  <figure><canvas id="storm"></canvas><h3>The Storm Ship<span>end of tide 3</span></h3><p>Darker sky, thickest fog, rain streaks. Still calm colours — drama comes from fog, not red alerts.</p></figure>
+  <figure><canvas id="dawn"></canvas><h3>Dawn<span>~1 min</span></h3><p>Fog lifts, the sky warms toward the lamp colour, boats tie up at the dock. Ends the session softly.</p></figure>
+  <div class="arc"><b>Arc:</b> the palette never changes during a session — only fog density, sky tint and weather do. That keeps the beam the brightest thing on screen at every phase, and makes Dawn feel like a reward because it's the only warm sky.</div>
+</div>
+<script>
+  function draw() {
+    LK.harbour(document.getElementById('lighting'), { phase: 'lighting', attention: 0.1, frost: true, route: false });
+    LK.harbour(document.getElementById('calm'), { phase: 'calm', attention: 0.7, route: false });
+    LK.harbour(document.getElementById('tide'), { phase: 'tide', attention: 0.6, steady: true });
+    LK.harbour(document.getElementById('storm'), { phase: 'storm', attention: 0.75, steady: true });
+    LK.harbour(document.getElementById('dawn'), { phase: 'dawn', route: false });
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>

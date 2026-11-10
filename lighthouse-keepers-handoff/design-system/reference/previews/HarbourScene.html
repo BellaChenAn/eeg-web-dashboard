@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Harbour scene</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
+  .bar { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); align-items: center; padding: var(--space-4); font-size: 15px; }
+  .bar label { display: flex; gap: var(--space-2); align-items: center; }
+  .bar input[type=range] { width: 200px; accent-color: var(--accent); }
+  .bar input[type=checkbox] { accent-color: var(--accent); width: 18px; height: 18px; }
+  select { font: inherit; background: var(--surface-raised); color: var(--ink); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px 6px; }
+  .note { padding: 0 var(--space-4) var(--space-4); font-size: 13px; color: var(--ink-muted); margin: 0; }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="Pixel-art harbour at night: a lighthouse on an island shines a beam through fog onto boats"></canvas>
+<div class="bar">
+  <label>Keeper's attention <input id="att" type="range" min="0" max="100" value="62"></label>
+  <label><input id="steady" type="checkbox" checked> Steady beam</label>
+  <label><input id="flare" type="checkbox"> Flare</label>
+  <label><input id="frost" type="checkbox"> Poor signal</label>
+  <label>Lighthouse <select id="lh"><option value="classic">Classic striped</option><option value="stubby">Stubby</option><option value="stone">Stone + cottage</option></select></label>
+  <label>Fog <select id="fog"><option value="bands">Banded</option><option value="dither">Dithered</option><option value="clouds">Puffy</option></select></label>
+</div>
+<p class="note">Slide attention to see the beam widen or shrink to a glow (it never goes dark). Hidden rocks only appear under a steady beam. Dashed line = the Pilot's drawn route. Boats in fog wait with a tiny lantern.</p>
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+  function draw() {
+    LK.harbour($('c'), {
+      attention: $('att').value / 100, steady: $('steady').checked, flare: $('flare').checked, frost: $('frost').checked,
+      lighthouse: $('lh').value, fog: $('fog').value, phase: 'tide'
+    });
+  }
+  ['att', 'steady', 'flare', 'frost', 'lh', 'fog'].forEach(function (id) { $(id).addEventListener('input', draw); });
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>

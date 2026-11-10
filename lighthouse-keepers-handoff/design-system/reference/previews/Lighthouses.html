@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Lighthouses</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); padding: var(--space-4); }
+  .pair { display: flex; gap: var(--space-2); }
+  canvas { image-rendering: pixelated; display: block; }
+  h3 { font-family: var(--font-pixel); font-weight: 600; font-size: 20px; line-height: 26px; margin: var(--space-2) 0 0; }
+  p { margin: 2px 0 0; font-size: 14px; line-height: 20px; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="grid">
+  <div><div class="pair" id="classic"></div><h3>A · Classic striped</h3><p>Tall, instantly reads as "lighthouse". Stripes use the palette's accent; most recognisable.</p></div>
+  <div><div class="pair" id="stubby"></div><h3>B · Stubby</h3><p>Short and chunky with a big lamp room — the lamp is easier to see changing at small sizes. Cutest.</p></div>
+  <div><div class="pair" id="stone"></div><h3>C · Stone + cottage</h3><p>Old stone tower with the Keeper's cottage. More "home"; the cottage window can show decorations.</p></div>
+</div>
+<script>
+  function tile(style, lit, frost) {
+    return LK.spriteCanvas(46, 62, 3, function (ctx, p) {
+      for (var y = 0; y < 62; y++) { ctx.fillStyle = y < 40 ? (y < 20 ? p['sky-deep'] : p.sky) : (y < 52 ? p.sea : p['sea-deep']); ctx.fillRect(0, y, 46, 1); }
+      LK.island(ctx, p, 18, 50);
+      LK.lighthouse(ctx, p, 18, 50, style, lit ? 1 : 0, frost);
+    });
+  }
+  function draw() {
+    ['classic', 'stubby', 'stone'].forEach(function (s) {
+      var el = document.getElementById(s); el.innerHTML = '';
+      el.appendChild(tile(s, true)); el.appendChild(tile(s, false));
+    });
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Game HUD</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  .stage { position: relative; }
+  .stage canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
+  .hud { position: absolute; font-family: var(--font-pixel); }
+  .lk-panel { padding: var(--space-2) var(--space-4); }
+  .tl { top: var(--space-4); left: var(--space-4); }
+  .tr { top: var(--space-4); right: var(--space-4); text-align: center; }
+  .bl { bottom: var(--space-4); left: var(--space-4); display: flex; align-items: center; gap: var(--space-2); }
+  .br { bottom: var(--space-4); right: var(--space-4); display: flex; align-items: flex-end; gap: var(--space-2); max-width: 380px; }
+  .tide { font-size: 28px; line-height: 32px; font-weight: 600; }
+  .ticks { display: flex; gap: var(--space-1); margin-top: var(--space-1); }
+  .ticks i { width: 24px; height: 8px; background: var(--border); }
+  .ticks i.on { background: var(--success); }
+  .pips { display: flex; gap: var(--space-2); justify-content: center; margin-top: var(--space-1); }
+  .pip { width: 16px; height: 16px; transform: rotate(45deg); box-shadow: 0 0 0 4px var(--outline); background: var(--surface); margin: 6px; }
+  .pip.on { background: var(--beam); }
+  .small { font-size: 16px; line-height: 22px; }
+  .bubble { font-size: 20px; line-height: 26px; }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-6); align-items: center; padding: var(--space-4) var(--space-6); }
+  .frost { display: flex; align-items: center; gap: var(--space-2); font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <canvas id="c" aria-label="Game screen mockup"></canvas>
+  <div class="hud tl lk-panel"><div class="tide">Tide 2</div><div class="ticks"><i class="on"></i><i class="on"></i><i></i></div></div>
+  <div class="hud tr lk-panel"><div class="small">Steady beams</div><div class="pips"><span class="pip on"></span><span class="pip on"></span><span class="pip"></span></div></div>
+  <div class="hud bl lk-panel"><span id="boatIcon"></span><span class="small">9 home</span></div>
+  <div class="hud br"><span id="guide"></span><div class="lk-panel bubble">Sit tall and keep your eyes on the light.</div></div>
+</div>
+<div class="row">
+  <button class="lk-btn">Start the night</button>
+  <button class="lk-btn secondary">Rest</button>
+  <span class="frost lk-pixel"><span id="frostIcon"></span>Lamp is frosty — grown-up, check the headset</span>
+</div>
+<script>
+  function draw() {
+    LK.harbour(document.getElementById('c'), { attention: 0.65, steady: true, phase: 'tide' });
+    var b = document.getElementById('boatIcon'); b.innerHTML = '';
+    b.appendChild(LK.spriteCanvas(9, 5, 4, function (ctx, p) { LK.drawSprite(ctx, LK.SPRITES.row, 0, 0, p); }));
+    var g = document.getElementById('guide'); g.innerHTML = '';
+    g.appendChild(LK.spriteCanvas(14, 21, 4, function (ctx, p) { LK.avatar(ctx, 1, 1, p, {}); }));
+    var f = document.getElementById('frostIcon'); f.innerHTML = '';
+    f.appendChild(LK.spriteCanvas(10, 9, 3, function (ctx, p) {
+      LK.px(ctx, p.outline, 0, 0, 10, 9); LK.px(ctx, p.lamp, 1, 1, 8, 7);
+      for (var y = 1; y < 8; y++) for (var x = 1; x < 9; x++) if (y === 1 || x === 1 || x === 8 || (x + y) % 3 === 0) LK.px(ctx, p.frost, x, y);
+    }));
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>
