@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en" data-theme="harbour-night">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lighthouse Keepers · live harbour</title>
+<link rel="stylesheet" href="lighthouse-keepers-handoff/design-system/tokens.css">
+<link rel="stylesheet" href="lighthouse-keepers-handoff/design-system/reference/lk-kit.css">
+<script src="lighthouse-keepers-handoff/design-system/reference/lk-kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  * { box-sizing: border-box; }
+
+  /* ---------- Keeper's scene (pixel art, no numbers) ---------- */
+  .stage { background: var(--outline); display: flex; justify-content: center; padding: var(--space-4) 0; }
+  .scene { position: relative; }
+  .scene canvas { display: block; }
+  .hud { position: absolute; top: var(--space-4); right: var(--space-4); text-align: center; }
+  .hud .game-small { color: var(--ink); }
+  .pips { display: flex; gap: var(--space-2); justify-content: center; margin-top: var(--space-1); }
+  .pip { width: 16px; height: 16px; transform: rotate(45deg); box-shadow: 0 0 0 4px var(--outline); background: var(--surface); margin: 6px; transition: background 1s; }
+  .pip.on { background: var(--beam); }
+
+  /* ---------- Pilot's readings (parent style, not pixel art) ---------- */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: var(--space-4); }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin-bottom: var(--space-4); }
+  header h1 { margin: 0 auto 0 0; }
+  .pill { display: inline-flex; align-items: center; gap: var(--space-2); padding: 4px 12px; border-radius: 999px;
+    background: var(--surface-raised); border: 1px solid var(--border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+  .dot.on { background: var(--success); }
+  .card { background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+  .card h2 { margin: 0 0 var(--space-2); display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); }
+  .cap { color: var(--ink-muted); }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-4); }
+  .stat .val { font-size: 34px; line-height: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4); }
+  .legend { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 18px; height: 3px; display: inline-block; }
+  canvas.chart { width: 100%; display: block; }
+  #trend { height: 240px; }
+  #raw { height: 160px; }
+  .bands { display: grid; gap: 6px; }
+  .band { display: grid; grid-template-columns: 84px 1fr 96px; align-items: center; gap: var(--space-2); }
+  .band .bar { height: 10px; background: var(--surface); border-radius: var(--radius-sm); overflow: hidden; }
+  .band .bar span { display: block; height: 100%; background: var(--route); width: 0; transition: width .3s; }
+  .band .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-muted); }
+  label.set { display: block; margin: var(--space-4) 0 var(--space-1); font-weight: 700; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .ends { display: flex; justify-content: space-between; }
+  .seg { display: flex; gap: var(--space-1); }
+  .seg button, .btn { flex: 1; font: inherit; padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: var(--surface); color: var(--ink); cursor: pointer; }
+  .seg button.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
+  .sig { display: inline-flex; align-items: flex-end; gap: 3px; height: 20px; }
+  .sig i { width: 6px; background: var(--success); }
+  .sig i.off { background: var(--border); }
+  button:focus-visible, input:focus-visible { outline: var(--space-1) solid var(--ink); outline-offset: var(--space-2); }
+  @media (max-width: 860px) { .stats { grid-template-columns: repeat(2, 1fr); } .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="scene" id="scene">
+    <canvas id="harbour" class="lk-pixel-canvas" aria-label="Pixel-art harbour at night: a striped lighthouse on an island shines a beam through fog onto boats"></canvas>
+    <div class="hud lk-panel">
+      <div class="game-small">Steady beams</div>
+      <div class="pips"><span class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1 class="parent-heading">Harbour Pilot · live readings</h1>
+    <span class="pill parent-caption"><span class="dot" id="bridgeDot"></span><span id="bridgeText">Connecting to bridge…</span></span>
+    <span class="pill parent-caption"><span class="sig" id="sigBars"><i style="height:6px"></i><i style="height:10px"></i><i style="height:14px"></i><i style="height:20px"></i></span><span id="sigText">Headset signal: no data</span></span>
+  </header>
+
+  <div class="stats">
+    <div class="card stat"><div class="parent-caption cap">Attention</div><div class="val" id="vAtt" style="color:var(--accent)">—</div><div class="parent-caption cap">0–100 · drives the beam</div></div>
+    <div class="card stat"><div class="parent-caption cap">Meditation</div><div class="val" id="vMed" style="color:var(--route)">—</div><div class="parent-caption cap">0–100</div></div>
+    <div class="card stat"><div class="parent-caption cap">Signal noise</div><div class="val" id="vPoor">—</div><div class="parent-caption cap">0 = good contact · 200 = not worn</div></div>
+    <div class="card stat"><div class="parent-caption cap">Blink strength</div><div class="val" id="vBlink">—</div><div class="parent-caption cap" id="vBlinkT">—</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="parent-heading">Trend</span>
+        <span class="parent-caption cap">last 120 s</span>
+        <span class="legend parent-caption"><i style="background:var(--accent)"></i>Attention</span>
+        <span class="legend parent-caption"><i style="background:var(--route)"></i>Meditation</span>
+        <span class="legend parent-caption"><i style="background:var(--ink-muted)"></i>Threshold</span>
+        <span class="legend parent-caption"><i style="background:var(--border)"></i>Noise (right axis)</span>
+      </h2>
+      <canvas class="chart" id="trend" aria-label="Line graph of attention, meditation and noise over the last two minutes"></canvas>
+    </div>
+    <div class="card">
+      <h2 class="parent-heading">Beam settings</h2>
+      <label class="set parent-body" for="th">Light threshold: <span id="thVal"></span></label>
+      <input id="th" type="range" min="10" max="90" step="1">
+      <div class="ends parent-caption cap"><span>Easier</span><span>Harder</span></div>
+      <label class="set parent-body">Hold time for a steady beam</label>
+      <div class="seg" id="hold"><button data-s="2">2 s</button><button data-s="3">3 s</button><button data-s="4">4 s</button></div>
+      <p class="parent-body" id="beamState" style="margin:var(--space-4) 0 0">—</p>
+      <p class="parent-caption cap">Below the threshold the beam narrows to a lamp glow. Hold above it to make a steady beam; three steady beams light the whole bay.</p>
+      <button class="btn parent-body" id="csvBtn" style="margin-top:var(--space-2)">Export CSV</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="parent-heading">Raw EEG</span><span class="parent-caption cap">512 Hz · last 4 s</span><span class="parent-caption cap" id="rawRate"></span></h2>
+      <canvas class="chart" id="raw" aria-label="Raw EEG waveform"></canvas>
+    </div>
+    <div class="card">
+      <h2><span class="parent-heading">Band power</span><span class="parent-caption cap">log scale</span></h2>
+      <div class="bands parent-caption" id="bands"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- Config (open design decisions stay as values) ----------
+const CFG = {
+  theme: "harbour-night", lighthouse: "classic", fog: "bands", phase: "tide",
+  threshold: 45,          // attention 0–100 where the cone starts
+  holdSec: 3,             // seconds above threshold for a steady beam
+  easeSec: 1,             // beam eases over about this long
+  frostAbove: 50,         // poorSignalLevel above this frosts the lamp
+  steadyForFlare: 3,
+  flareSec: 10,
+};
+
+const TREND_WINDOW = 120, RAW_LEN = 512 * 4;
+const BANDS = ["delta","theta","lowAlpha","highAlpha","lowBeta","highBeta","lowGamma","highGamma"];
+const $ = id => document.getElementById(id);
+
+const state = {
+  trend: [], records: [], att: null, med: null, poor: null,
+  raw: new Float32Array(RAW_LEN), rawIdx: 0, rawCount: 0, rawRecv: 0,
+};
+
+// ---------- Data stream (same handling as index.html) ----------
+const es = new EventSource("/events");
+es.onerror = () => setBridge(false, "Bridge not connected (is bridge.py running?)");
+es.onmessage = ev => {
+  const msg = JSON.parse(ev.data);
+  if (msg.type === "bridge") {
+    const src = msg.source || "headset";
+    if (msg.status === "connected") setBridge(true, `Receiving data: ${src}`);
+    else if (msg.status === "connecting") setBridge(false, `Connecting: ${src}…`);
+    else if (msg.status === "waiting") setBridge(false, `Waiting for headset data (${src})`);
+    else setBridge(false, `Not connected: ${src}`);
+    return;
+  }
+  if (msg.type === "raw") onRaw(msg.samples);
+  else if (msg.type === "packet") onPacket(msg.data, msg.t);
+};
+
+function setBridge(on, text) {
+  $("bridgeDot").classList.toggle("on", on);
+  $("bridgeText").textContent = text;
+}
+
+function onRaw(samples) {
+  for (const v of samples) { state.raw[state.rawIdx] = v; state.rawIdx = (state.rawIdx + 1) % RAW_LEN; }
+  state.rawCount = Math.min(RAW_LEN, state.rawCount + samples.length);
+  state.rawRecv += samples.length;
+}
+
+function onPacket(d, t) {
+  const time = new Date(t * 1000);
+  if (d.eSense) { state.att = d.eSense.attention ?? state.att; state.med = d.eSense.meditation ?? state.med; }
+  if ("poorSignalLevel" in d) state.poor = d.poorSignalLevel;
+  if ("blinkStrength" in d) { $("vBlink").textContent = d.blinkStrength; $("vBlinkT").textContent = "at " + time.toLocaleTimeString(); }
+  if (d.eegPower) updateBands(d.eegPower);
+  if (d.eSense || "poorSignalLevel" in d) {
+    state.trend.push({ t, att: state.att, med: state.med, poor: state.poor });
+    while (state.trend.length && state.trend[0].t < t - TREND_WINDOW) state.trend.shift();
+    state.records.push({
+      time: time.toISOString(), attention: state.att, meditation: state.med, poorSignalLevel: state.poor,
+      ...Object.fromEntries(BANDS.map(b => [b, d.eegPower ? d.eegPower[b] : ""])),
+    });
+    updateStats();
+  }
+}
+
+function updateStats() {
+  $("vAtt").textContent = state.att ?? "—";
+  $("vMed").textContent = state.med ?? "—";
+  $("vPoor").textContent = state.poor ?? "—";
+  const p = state.poor;
+  // No red: signal quality is shown as bars and words only.
+  const [bars, word] = p == null ? [0, "no data"] : p === 0 ? [4, "good"] : p <= CFG.frostAbove ? [3, "fair"]
+    : p < 200 ? [2, "noisy"] : [0, "not touching skin"];
+  [...$("sigBars").children].forEach((el, i) => el.classList.toggle("off", i >= bars));
+  $("sigText").textContent = "Headset signal: " + word;
+}
+
+$("bands").innerHTML = BANDS.map(b =>
+  `<div class="band"><span>${b}</span><div class="bar"><span id="bar_${b}"></span></div><span class="num" id="num_${b}">—</span></div>`).join("");
+function updateBands(p) {
+  const logs = BANDS.map(b => Math.log10(Math.max(1, p[b] || 1)));
+  const max = Math.max(7, ...logs);
+  BANDS.forEach((b, i) => {
+    $("bar_" + b).style.width = (logs[i] / max * 100).toFixed(1) + "%";
+    $("num_" + b).textContent = (p[b] ?? 0).toLocaleString();
+  });
+}
+
+// ---------- Settings ----------
+$("th").value = CFG.threshold;
+$("thVal").textContent = CFG.threshold;
+$("th").oninput = e => { CFG.threshold = +e.target.value; $("thVal").textContent = CFG.threshold; };
+const holdBtns = [...$("hold").children];
+const markHold = () => holdBtns.forEach(b => b.classList.toggle("on", +b.dataset.s === CFG.holdSec));
+holdBtns.forEach(b => b.onclick = () => { CFG.holdSec = +b.dataset.s; markHold(); });
+markHold();
+
+$("csvBtn").onclick = () => {
+  if (!state.records.length) return alert("No data yet");
+  const cols = Object.keys(state.records[0]);
+  const csv = [cols.join(","), ...state.records.map(r => cols.map(c => r[c] ?? "").join(","))].join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = `eeg_${new Date().toISOString().replace(/[:.]/g, "-")}.csv`;
+  a.click();
+};
+
+// ---------- Beam logic ----------
+// Attention → beam level for LK.harbour (0–1). The kit's cone fades in between 0.08 and 0.25,
+// so below the threshold we stay at ≤ 0.08 (lamp glow only, never dark) and jump into the cone above it.
+function beamTarget() {
+  if (state.att == null || state.poor == null || state.poor >= 200) return 0;
+  const a = state.att / 100, th = CFG.threshold / 100;
+  return a < th ? 0.08 * a / th : 0.12 + 0.88 * (a - th) / (1 - th);
+}
+
+const beam = { level: 0, aboveSince: null, steady: false, count: 0, flareUntil: 0, flare: 0 };
+
+function updateBeam(now, dt) {
+  const tau = CFG.easeSec / 3;                       // ~95% of the way in easeSec
+  beam.level += (beamTarget() - beam.level) * (1 - Math.exp(-dt / tau));
+
+  const flaring = now < beam.flareUntil;
+  const above = state.att != null && state.poor != null && state.poor < 200 && state.att >= CFG.threshold;
+  if (!above) { beam.aboveSince = null; beam.steady = false; }
+  else {
+    beam.aboveSince ??= now;
+    if (!beam.steady && now - beam.aboveSince >= CFG.holdSec) {
+      beam.steady = true;
+      if (!flaring && ++beam.count >= CFG.steadyForFlare) beam.flareUntil = now + CFG.flareSec;
+    }
+  }
+  if (!flaring && beam.count >= CFG.steadyForFlare && now >= beam.flareUntil) beam.count = 0;
+  // flare is a slow bloom in and out, never a flash
+  beam.flare += ((now < beam.flareUntil ? 1 : 0) - beam.flare) * (1 - Math.exp(-dt / 1.2));
+}
+
+function updateBeamText() {
+  document.querySelectorAll(".pip").forEach((el, i) => el.classList.toggle("on", i < beam.count));
+  $("beamState").textContent =
+    beam.flare > 0.5 ? "Flare: the whole bay is lit." :
+    beam.steady ? `Steady beam (${beam.count} of ${CFG.steadyForFlare}).` :
+    beam.aboveSince != null ? `Above threshold, holding… (${beam.count} of ${CFG.steadyForFlare} steady beams)` :
+    `Lamp glow (${beam.count} of ${CFG.steadyForFlare} steady beams)`;
+}
+
+// ---------- Scene rendering ----------
+let palette = null, last = null;
+const sceneCv = $("harbour"), flareCv = document.createElement("canvas");
+
+function fitScene() {
+  const s = Math.max(1, Math.min(Math.floor((innerWidth - 32) / 240), Math.floor(innerHeight * 0.68 / 135)));
+  sceneCv.style.width = 240 * s + "px";
+  sceneCv.style.height = 135 * s + "px";
+}
+addEventListener("resize", fitScene);
+
+function renderScene() {
+  const frost = state.poor == null || state.poor > CFG.frostAbove;
+  const key = { level: beam.level, steady: beam.steady, flare: beam.flare, frost };
+  // The per-pixel render is costly; skip frames when nothing visible changed.
+  if (last && Math.abs(key.level - last.level) < 0.002 && Math.abs(key.flare - last.flare) < 0.004
+      && key.steady === last.steady && key.frost === last.frost) return;
+  last = key;
+  const opts = { palette, attention: key.level, steady: key.steady, frost, lighthouse: CFG.lighthouse, fog: CFG.fog, phase: CFG.phase };
+  LK.harbour(sceneCv, opts);
+  if (key.flare > 0.004) {
+    LK.harbour(flareCv, { ...opts, flare: true });
+    const ctx = sceneCv.getContext("2d");
+    ctx.globalAlpha = key.flare;
+    ctx.drawImage(flareCv, 0, 0);
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ---------- Charts ----------
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+function setupCanvas(c) {
+  const dpr = devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+  if (c.width !== w * dpr || c.height !== h * dpr) { c.width = w * dpr; c.height = h * dpr; }
+  const ctx = c.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+function drawTrend() {
+  const { ctx, w, h } = setupCanvas($("trend"));
+  const L = 34, R = 40, T = 8, B = 22, pw = w - L - R, ph = h - T - B, now = Date.now() / 1000;
+  const x = t => L + (1 - (now - t) / TREND_WINDOW) * pw;
+  ctx.font = "12px " + css("--font-read");
+  ctx.lineWidth = 1; ctx.strokeStyle = css("--border"); ctx.fillStyle = css("--ink-muted");
+  for (let i = 0; i <= 4; i++) {
+    const y = T + ph * i / 4 + .5;
+    ctx.globalAlpha = .4; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke(); ctx.globalAlpha = 1;
+    ctx.textAlign = "right"; ctx.fillText(100 - i * 25, L - 6, y + 4);
+    ctx.textAlign = "left"; ctx.fillText(200 - i * 50, L + pw + 6, y + 4);
+  }
+  ctx.textAlign = "center";
+  for (let s = 0; s <= TREND_WINDOW; s += 30) ctx.fillText(s === 0 ? "now" : `-${s}s`, L + pw - s / TREND_WINDOW * pw, h - 6);
+
+  const line = (key, max, color, width, dash) => {
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []);
+    ctx.beginPath();
+    let started = false;
+    for (const p of state.trend) {
+      if (p[key] == null) { started = false; continue; }
+      const px = x(p.t), py = T + ph * (1 - p[key] / max);
+      started ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+      started = true;
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  };
+  ctx.save(); ctx.beginPath(); ctx.rect(L, 0, pw, h); ctx.clip();
+  const ty = T + ph * (1 - CFG.threshold / 100);
+  ctx.strokeStyle = css("--ink-muted"); ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(L, ty); ctx.lineTo(L + pw, ty); ctx.stroke(); ctx.setLineDash([]);
+  line("poor", 200, css("--border"), 2, [4, 3]);
+  line("med", 100, css("--route"), 2);
+  line("att", 100, css("--accent"), 2.5);
+  ctx.restore();
+}
+
+function drawRaw() {
+  const { ctx, w, h } = setupCanvas($("raw"));
+  const n = state.rawCount;
+  if (!n) return;
+  const at = i => state.raw[(state.rawIdx - n + i + RAW_LEN) % RAW_LEN];
+  let min = Infinity, max = -Infinity;
+  for (let i = 0; i < n; i++) { const v = at(i); if (v < min) min = v; if (v > max) max = v; }
+  const pad = Math.max(10, (max - min) * 0.1); min -= pad; max += pad;
+  const L = 44, pw = w - L, ph = h - 4;
+  ctx.font = "12px " + css("--font-read"); ctx.fillStyle = css("--ink-muted"); ctx.textAlign = "right";
+  ctx.fillText(Math.round(max), L - 6, 12); ctx.fillText(Math.round(min), L - 6, h - 4);
+  ctx.strokeStyle = css("--success"); ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const px = L + (RAW_LEN - n + i) / RAW_LEN * pw, py = 2 + ph * (1 - (at(i) - min) / (max - min));
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+}
+
+setInterval(() => {
+  $("rawRate").textContent = state.rawRecv ? `actual rate ≈ ${state.rawRecv} Hz` : "";
+  state.rawRecv = 0;
+}, 1000);
+
+// ---------- Main loop ----------
+let prev = performance.now();
+function frame(t) {
+  const dt = Math.min(0.1, (t - prev) / 1000); prev = t;
+  updateBeam(t / 1000, dt);
+  updateBeamText();
+  renderScene();
+  drawTrend();
+  drawRaw();
+  requestAnimationFrame(frame);
+}
+
+LK.ready(() => {
+  palette = LK.pal(CFG.theme);
+  fitScene();
+  requestAnimationFrame(frame);
+});
+</script>
+</body>
+</html>
