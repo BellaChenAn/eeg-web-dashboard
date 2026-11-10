@@ -57,6 +57,17 @@ python3 bridge.py --demo
 ```
 This streams simulated data, so you can explore the page or build on it before you have a headset.
 
+### Lighthouse harbour view
+
+With the bridge running, open **http://localhost:8000/harbour**. Your attention drives the Lighthouse Keepers harbour scene (Harbour Night palette, classic striped lighthouse) and the live readings sit underneath:
+
+- Below the **light threshold** the beam narrows to a lamp glow; above it the beam widens. Changes ease over about 1 second.
+- Holding attention above the threshold for the **hold time** (2/3/4 s) makes a **steady beam** that reveals the rocks. Three steady beams make a **flare** that lights the whole bay.
+- A poor signal (noise above 50) frosts the lamp glass.
+- Below the scene: attention, meditation, noise and blink readings, a 120 s trend with the threshold line, the raw EEG, band power and CSV export.
+
+The scene is drawn by the design kit in `lighthouse-keepers-handoff/design-system/reference/lk-kit.js`. Defaults (palette, lighthouse, fog, threshold, hold time) are in the `CFG` object at the top of the script in `harbour.html`.
+
 ---
 
 ## How it works
@@ -81,6 +92,7 @@ A web page can't read Bluetooth or serial ports directly, so `bridge.py` reads t
 |---|---|
 | `bridge.py` | The bridge server: reads the headset and serves the page (standard library only) |
 | `index.html` | The dashboard (plain HTML + JavaScript, no frameworks) |
+| `harbour.html` | The Lighthouse Keepers harbour view driven by live attention |
 | `rfcomm_reader.swift` | Source of the Bluetooth helper |
 | `rfcomm_reader` | Prebuilt helper (universal: Apple Silicon + Intel). If you delete it, `bridge.py` rebuilds it with `swiftc` (needs Xcode Command Line Tools: `xcode-select --install`) |
 
