@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lighthouse Keepers — design reference</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  header { position: sticky; top: 0; z-index: 1; display: flex; gap: 16px; align-items: center; padding: 12px 24px; background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  header h1 { font-family: var(--font-pixel); font-size: 24px; margin: 0; flex: 1; }
+  select { font: inherit; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; }
+  main { max-width: 1000px; margin: 0 auto; padding: 8px 20px 48px; }
+  section { margin-top: 28px; }
+  h2 { font-family: var(--font-pixel); font-size: 22px; margin: 0; }
+  p { margin: 4px 0 8px; color: var(--ink-muted); font-size: 14px; }
+  iframe { width: 960px; max-width: 100%; border: 1px solid var(--border); display: block; background: var(--surface); }
+</style>
+</head>
+<body>
+<header><h1>Lighthouse Keepers</h1><label>Palette <select id="theme"><option value="harbour-night">Harbour Night</option><option value="sea-glass">Sea Glass</option><option value="slate-lantern">Slate & Lantern</option><option value="deep-fjord">Deep Fjord</option><option value="dusk-harbour">Dusk Harbour</option><option value="foggy-dawn">Foggy Dawn</option><option value="storm-ink">Storm Ink</option></select></label></header>
+<main>
+<section><h2>Cover</h2><p></p><iframe data-src="previews/Cover.html" style="height:288px" title="Cover"></iframe></section>
+<section><h2>PaletteCompare</h2><p>All seven palette options side by side — same scene, same moment</p><iframe data-src="previews/PaletteCompare.html" style="height:1640px" title="PaletteCompare"></iframe></section>
+<section><h2>HarbourScene</h2><p>The main game screen during a tide, live in the selected palette</p><iframe data-src="previews/HarbourScene.html" style="height:680px" title="HarbourScene"></iframe></section>
+<section><h2>NightArc</h2><p>One night at the harbour: how the screen changes across the 12-minute session</p><iframe data-src="previews/NightArc.html" style="height:590px" title="NightArc"></iframe></section>
+<section><h2>BeamStates</h2><p>How the Keeper's attention shows up on screen — no numbers, only light</p><iframe data-src="previews/BeamStates.html" style="height:560px" title="BeamStates"></iframe></section>
+<section><h2>FogStyles</h2><p>Three ways to draw the fog — pick one</p><iframe data-src="previews/FogStyles.html" style="height:290px" title="FogStyles"></iframe></section>
+<section><h2>PixelScale</h2><p>How chunky should the pixels be? Same scene at three art resolutions</p><iframe data-src="previews/PixelScale.html" style="height:300px" title="PixelScale"></iframe></section>
+<section><h2>Lighthouses</h2><p>Three lighthouse designs to choose from (lamp lit and resting)</p><iframe data-src="previews/Lighthouses.html" style="height:330px" title="Lighthouses"></iframe></section>
+<section><h2>Boats</h2><p>Boats the Pilot guides home — lit vs. waiting in the fog</p><iframe data-src="previews/Boats.html" style="height:510px" title="Boats"></iframe></section>
+<section><h2>KeeperAvatar</h2><p>The child's customizable Keeper — hats, coats and skin tones</p><iframe data-src="previews/KeeperAvatar.html" style="height:650px" title="KeeperAvatar"></iframe></section>
+<section><h2>Decorations</h2><p>Rewards the child spends at Dawn to decorate the lighthouse</p><iframe data-src="previews/Decorations.html" style="height:300px" title="Decorations"></iframe></section>
+<section><h2>GameHUD</h2><p>The child's screen during a tide: pixel panels over the scene, no score shown</p><iframe data-src="previews/GameHUD.html" style="height:640px" title="GameHUD"></iframe></section>
+<section><h2>DawnSummary</h2><p>End of the night: team result and the decoration shop</p><iframe data-src="previews/DawnSummary.html" style="height:530px" title="DawnSummary"></iframe></section>
+<section><h2>PilotSettings</h2><p>The parent's settings screen — plain and readable, not pixel art</p><iframe data-src="previews/PilotSettings.html" style="height:520px" title="PilotSettings"></iframe></section>
+</main>
+<script>
+  var sel = document.getElementById('theme');
+  function load() {
+    document.documentElement.setAttribute('data-theme', sel.value);
+    document.querySelectorAll('iframe').forEach(function (f) { f.src = f.getAttribute('data-src') + '?theme=' + sel.value; });
+  }
+  sel.addEventListener('change', load); load();
+</script>
+</body>
+</html>

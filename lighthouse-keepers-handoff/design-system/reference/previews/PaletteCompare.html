@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Palette comparison</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6) var(--space-4); padding: var(--space-4); }
+  .cell { margin: 0; }
+  canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
+  h3 { font-family: var(--font-pixel); font-weight: 600; font-size: 22px; line-height: 28px; margin: var(--space-2) 0 0; display: flex; gap: var(--space-2); align-items: baseline; }
+  h3 small { font-family: var(--font-read); font-weight: 400; font-size: 13px; color: var(--ink-muted); }
+  p { margin: 2px 0 var(--space-2); font-size: 14px; line-height: 20px; color: var(--ink-muted); }
+  .sw { display: flex; height: 20px; }
+  .sw span { flex: 1; }
+  .intro { grid-column: 1 / -1; margin: 0; font-size: 15px; line-height: 22px; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="grid" id="g">
+  <p class="intro">Each palette is a theme of this system — switch the theme at the top of the page to see every other card redraw in it. Strip under each scene: sky, sea, fog, beam, lamp, tower, stripe, hull, route, surface.</p>
+</div>
+<script>
+  var SW = ['sky-deep', 'sky', 'sea-deep', 'sea', 'sea-light', 'fog', 'fog-thick', 'beam', 'lamp', 'tower', 'stripe', 'hull', 'route', 'surface'];
+  function draw() {
+    var g = document.getElementById('g');
+    g.querySelectorAll('.cell').forEach(function (n) { n.remove(); });
+    var cur = LK.currentTheme();
+    LK.THEMES.forEach(function (t, i) {
+      var p = LK.pal(t.id), fig = document.createElement('figure');
+      fig.className = 'cell';
+      var cv = document.createElement('canvas');
+      cv.setAttribute('aria-label', t.name + ' palette scene');
+      LK.harbour(cv, { palette: p, attention: 0.6, steady: true, phase: 'tide' });
+      var sw = document.createElement('div'); sw.className = 'sw';
+      SW.forEach(function (k) { var s = document.createElement('span'); s.style.background = p[k]; s.title = k + ' ' + p[k]; sw.appendChild(s); });
+      var h = document.createElement('h3');
+      h.textContent = String.fromCharCode(65 + i) + ' · ' + t.name;
+      if (t.id === cur) { var sm = document.createElement('small'); sm.textContent = '(theme shown now)'; h.appendChild(sm); }
+      var d = document.createElement('p'); d.textContent = t.mood;
+      fig.appendChild(cv); fig.appendChild(sw); fig.appendChild(h); fig.appendChild(d);
+      g.appendChild(fig);
+    });
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>

@@ -26,7 +26,8 @@ import socket
 import subprocess
 import threading
 import time
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -312,22 +313,18 @@ def demo_generator():
         time.sleep(0.01)
 
 
-class Handler(BaseHTTPRequestHandler):
+class Handler(SimpleHTTPRequestHandler):
+    """Serves /events as SSE and the repo's static files (index.html, harbour.html, design kit)."""
+
     def log_message(self, *args):
         pass
 
     def do_GET(self):
         if self.path == "/events":
             return self.stream()
-        if self.path in ("/", "/index.html"):
-            body = (HERE / "index.html").read_bytes()
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-            return
-        self.send_error(404)
+        if self.path.rstrip("/") == "/harbour":
+            self.path = "/harbour.html"
+        return super().do_GET()
 
     def stream(self):
         self.send_response(200)
@@ -374,8 +371,9 @@ def main():
     else:
         threading.Thread(target=tgc_reader, args=(args.tgc_host, args.tgc_port), daemon=True).start()
 
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    server = ThreadingHTTPServer(("127.0.0.1", args.port), partial(Handler, directory=str(HERE)))
     print(f"[bridge] Open http://localhost:{args.port} in your browser   (Ctrl+C to quit)")
+    print(f"[bridge] Lighthouse harbour: http://localhost:{args.port}/harbour")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -1,0 +1,25 @@
+/* Lighthouse Keepers — shared pixel UI pieces. Colours come from tokens.css only. */
+.lk-root { font-family: var(--font-read); color: var(--ink); background: var(--surface); margin: 0; }
+.lk-pixel-canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+
+/* notched pixel panel: a 4px border with the corner squares cut out */
+.lk-panel {
+  background: var(--surface-raised); color: var(--ink);
+  margin: var(--space-1); padding: var(--space-4);
+  box-shadow: 0 calc(-1 * var(--space-1)) 0 0 var(--border), 0 var(--space-1) 0 0 var(--border),
+              calc(-1 * var(--space-1)) 0 0 0 var(--border), var(--space-1) 0 0 0 var(--border);
+}
+.lk-btn {
+  font-family: var(--font-pixel); font-size: 20px; line-height: 26px; font-weight: 500;
+  background: var(--accent); color: var(--on-accent); border: 0; cursor: pointer;
+  margin: var(--space-1); padding: var(--space-2) var(--space-4) calc(var(--space-2) + var(--space-1));
+  box-shadow: 0 calc(-1 * var(--space-1)) 0 0 var(--outline), 0 var(--space-1) 0 0 var(--outline),
+              calc(-1 * var(--space-1)) 0 0 0 var(--outline), var(--space-1) 0 0 0 var(--outline),
+              inset 0 calc(-1 * var(--space-1)) 0 0 rgba(0, 0, 0, .22);
+}
+.lk-btn:active { transform: translateY(2px); box-shadow: 0 calc(-1 * var(--space-1)) 0 0 var(--outline), 0 var(--space-1) 0 0 var(--outline), calc(-1 * var(--space-1)) 0 0 0 var(--outline), var(--space-1) 0 0 0 var(--outline); }
+.lk-btn.secondary { background: var(--surface-raised); color: var(--ink); }
+.lk-btn:focus-visible { outline: var(--space-1) solid var(--ink); outline-offset: var(--space-2); }
+
+.lk-pixel { font-family: var(--font-pixel); }
+.lk-muted { color: var(--ink-muted); }

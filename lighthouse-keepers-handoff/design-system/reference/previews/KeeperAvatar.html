@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Keeper avatar</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  section { padding: var(--space-4) var(--space-4) 0; }
+  h3 { font-family: var(--font-pixel); font-weight: 600; font-size: 20px; line-height: 26px; margin: 0 0 var(--space-2); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: flex-end; }
+  figure { margin: 0; text-align: center; }
+  figcaption { font-size: 13px; color: var(--ink-muted); margin-top: 4px; }
+  canvas { image-rendering: pixelated; display: block; }
+  .note { padding: var(--space-4); font-size: 14px; line-height: 20px; color: var(--ink-muted); margin: 0; }
+</style>
+</head>
+<body>
+<section><h3>Hat</h3><div class="row" id="hats"></div></section>
+<section><h3>Coat</h3><div class="row" id="coats"></div></section>
+<section><h3>Skin tone</h3><div class="row" id="skins"></div></section>
+<p class="note">12×19 art pixels — small enough to stand on the lighthouse gallery in the scene, shown here at 5×. Coat and hat colours come from the palette, so they always match the world; skin tones stay the same in every palette. Picking is a between-rounds choice for the child (one of the "small choices" from the design doc).</p>
+<script>
+  function av(o) {
+    return LK.spriteCanvas(16, 22, 5, function (ctx, p) { LK.avatar(ctx, 2, 1, p, o); }, 'surface-raised');
+  }
+  function fig(cv, label) { var f = document.createElement('figure'), c = document.createElement('figcaption'); c.textContent = label; f.appendChild(cv); f.appendChild(c); return f; }
+  function draw() {
+    var hats = document.getElementById('hats'), coats = document.getElementById('coats'), skins = document.getElementById('skins');
+    hats.innerHTML = coats.innerHTML = skins.innerHTML = '';
+    [['souwester', 'lamp', "Sou'wester"], ['beanie', 'stripe', 'Beanie'], ['captain', 'roof', 'Captain cap'], ['souwester', 'route', "Sou'wester, alt"], ['beanie', 'success', 'Beanie, alt']]
+      .forEach(function (h) { hats.appendChild(fig(av({ style: h[0], hat: h[1] }), h[2])); });
+    [['stripe', 'Stripe'], ['sea-light', 'Sea'], ['success', 'Kelp'], ['route', 'Sky'], ['lamp', 'Lamp'], ['hull', 'Wood']]
+      .forEach(function (c) { coats.appendChild(fig(av({ coat: c[0] }), c[1])); });
+    ['skin-1', 'skin-2', 'skin-3', 'skin-4'].forEach(function (s, i) { skins.appendChild(fig(av({ skin: s }), 'Tone ' + (i + 1))); });
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>

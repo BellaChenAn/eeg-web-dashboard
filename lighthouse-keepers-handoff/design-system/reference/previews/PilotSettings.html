@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>(function(){var t=new URLSearchParams(location.search).get("theme");if(t)document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../lk-kit.css">
+<script src="../lk-kit.js"></script>
+
+<meta charset="utf-8">
+<title>Pilot settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-read); }
+  .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--space-4); padding: var(--space-4); }
+  .card { background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+  h2 { margin: 0 0 var(--space-2); }
+  .cap { color: var(--ink-muted); }
+  canvas { width: 100%; height: 220px; display: block; }
+  .legend { display: flex; gap: var(--space-4); margin-top: var(--space-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 18px; height: 3px; display: inline-block; }
+  label { display: block; margin: var(--space-4) 0 var(--space-1); font-weight: 700; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .ends { display: flex; justify-content: space-between; }
+  .seg { display: flex; gap: var(--space-1); }
+  .seg button { flex: 1; font: inherit; padding: 6px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--ink); }
+  .seg button.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
+  .sig { display: flex; align-items: flex-end; gap: 3px; height: 20px; }
+  .sig i { width: 6px; background: var(--success); }
+  .sig i.off { background: var(--border); }
+  .phr { margin: var(--space-2) 0 0; padding-left: 18px; }
+  .phr li { margin: 2px 0; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h2 class="parent-heading">Keeper's focus</h2>
+    <div class="parent-caption cap">Live, smoothed · last 60 seconds · only you see this</div>
+    <canvas id="g" aria-label="Line graph of attention over the last minute against the threshold line"></canvas>
+    <div class="legend parent-caption"><span><i style="background:var(--accent)"></i>Focus</span><span><i style="background:var(--ink-muted)"></i>Threshold</span></div>
+    <div class="parent-body" style="margin-top:var(--space-4)">Encouraging things to say:<ul class="phr parent-body"><li>"Nice steady light!"</li><li>"Look how far the beam reaches."</li><li>"Let's take a slow breath together."</li></ul></div>
+  </div>
+  <div class="card">
+    <h2 class="parent-heading">Session settings</h2>
+    <label class="parent-body" for="th">Light threshold</label>
+    <input id="th" type="range" min="0" max="100" value="45">
+    <div class="ends parent-caption cap"><span>Easier</span><span>Harder</span></div>
+    <label class="parent-body">Hold time for a steady beam</label>
+    <div class="seg"><button>2 s</button><button class="on">3 s</button><button>4 s</button></div>
+    <label class="parent-body">Headset signal</label>
+    <div style="display:flex;gap:10px;align-items:center"><span class="sig"><i style="height:6px"></i><i style="height:10px"></i><i style="height:14px"></i><i class="off" style="height:20px"></i></span><span class="parent-body">Good</span></div>
+    <p class="parent-caption cap" style="margin-top:var(--space-4)">Changes apply at the next rest, so the Keeper isn't interrupted.</p>
+  </div>
+</div>
+<script>
+  function draw() {
+    var cv = document.getElementById('g'), p = LK.pal(), r = window.devicePixelRatio || 1;
+    var W = cv.clientWidth, H = cv.clientHeight; cv.width = W * r; cv.height = H * r;
+    var ctx = cv.getContext('2d'); ctx.scale(r, r);
+    ctx.strokeStyle = p.border; ctx.lineWidth = 1;
+    for (var i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(0, H * i / 4 + .5); ctx.lineTo(W, H * i / 4 + .5); ctx.stroke(); }
+    var th = H * 0.52;
+    ctx.strokeStyle = p['ink-muted']; ctx.setLineDash([6, 5]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, th); ctx.lineTo(W, th); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = p.accent; ctx.lineWidth = 2.5; ctx.beginPath();
+    for (var x = 0; x <= W; x += 4) {
+      var t = x / W, y = H * (0.62 - 0.32 * Math.sin(t * 5.2 + 0.4) * (0.6 + t * 0.5) - 0.06 * Math.sin(t * 23));
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  LK.ready(draw); LK.onTheme(draw);
+</script>
+</body>
+</html>
